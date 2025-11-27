@@ -2,14 +2,16 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    // Simple connection - no deprecated options needed
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log(`\n✅ MongoDB Atlas Connected Successfully!`);
+    console.log(`   Host: ${conn.connection.host}`);
+    console.log(`   Database: ${conn.connection.name}`);
+    console.log(`   Port: ${conn.connection.port}\n`);
   } catch (error) {
-    console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    console.error(`\n❌ MongoDB Connection Error:`);
+    console.error(`   ${error.message}\n`);
     process.exit(1);
   }
 };
