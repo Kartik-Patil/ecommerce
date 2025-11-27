@@ -1,17 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { getAllProducts } from '../../utils/api';
 import ProductCard from './ProductCard';
-import { sampleProducts } from '../../data/sampleProducts';
 import { FaSearch, FaFilter, FaSpinner } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
 
 const Products = () => {
-  const [products, setProducts] = useState(sampleProducts);
-  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState(null);
 
   const categories = ['All', 'Electronics', 'Fashion', 'Home', 'Books', 'Sports'];
+
+  // Fetch products from backend
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { data } = await getAllProducts();
+      setProducts(data);
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+      setError('Failed to load products. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Skeleton Loader Component
   const SkeletonCard = () => (
@@ -36,6 +55,7 @@ const Products = () => {
     return matchesCategory && matchesSearch;
   });
 
+  // Loading State
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12">
@@ -51,6 +71,27 @@ const Products = () => {
             {[...Array(8)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 flex items-center justify-center">
+        <div className="text-center animate-fade-in-up">
+          <div className="inline-block glass-panel backdrop-blur-xl px-12 py-16 rounded-3xl shadow-premium-lg">
+            <div className="text-8xl mb-6">⚠️</div>
+            <h3 className="text-4xl font-black gradient-text mb-4">Oops! Something went wrong</h3>
+            <p className="text-gray-600 mb-8 text-lg max-w-md mx-auto">{error}</p>
+            <button
+              onClick={fetchProducts}
+              className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-premium-lg hover:shadow-glow transform hover:scale-105 transition-all btn-premium overflow-hidden"
+            >
+              <span className="relative">Try Again</span>
+            </button>
           </div>
         </div>
       </div>
@@ -96,11 +137,14 @@ const Products = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-16 pr-6 py-5 bg-transparent text-gray-800 placeholder-gray-500 text-lg focus:outline-none font-medium"
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg hover:shadow-glow transition-all cursor-pointer">
-                  Search
-                </div>
-              </div>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ×
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -166,7 +210,7 @@ const Products = () => {
         </div>
 
         {/* Empty State with Premium Design */}
-        {filteredProducts.length === 0 && (
+        {filteredProducts.length === 0 && products.length > 0 && (
           <div className="text-center py-20 animate-fade-in-up">
             <div className="inline-block glass-panel px-12 py-16 rounded-3xl backdrop-blur-xl shadow-premium-lg">
               <div className="text-8xl mb-6 animate-float">😕</div>
@@ -182,6 +226,25 @@ const Products = () => {
                 className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-premium-lg hover:shadow-glow transform hover:scale-105 transition-all btn-premium overflow-hidden"
               >
                 <span className="relative">Clear All Filters</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* No Products in Database */}
+        {products.length === 0 && !loading && !error && (
+          <div className="text-center py-20 animate-fade-in-up">
+            <div className="inline-block glass-panel px-12 py-16 rounded-3xl backdrop-blur-xl shadow-premium-lg">
+              <div className="text-8xl mb-6 animate-float">📦</div>
+              <h3 className="text-4xl font-black gradient-text mb-4">No Products Available</h3>
+              <p className="text-gray-600 mb-8 text-lg max-w-md mx-auto">
+                The store is currently empty. Check back soon for amazing products!
+              </p>
+              <button
+                onClick={fetchProducts}
+                className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-premium-lg hover:shadow-glow transform hover:scale-105 transition-all btn-premium overflow-hidden"
+              >
+                <span className="relative">Refresh</span>
               </button>
             </div>
           </div>
